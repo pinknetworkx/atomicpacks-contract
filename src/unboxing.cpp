@@ -140,8 +140,8 @@ ACTION atomicpacks::receiverand(
     for (auto roll_itr = packrolls.begin(); roll_itr != packrolls.end(); roll_itr++) {
         bool found_result = false;
         while (!found_result) {
-            double rand = randomness_provider.get_rand();
-            double summed_odds = 0.0;
+            uint32_t rand = randomness_provider.get_rand(roll_itr->total_odds);
+            uint32_t summed_odds = 0;
 
             for (const OUTCOME &outcome : roll_itr->outcomes) {
                 summed_odds += outcome.odds;

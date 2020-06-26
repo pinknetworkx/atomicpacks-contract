@@ -15,10 +15,10 @@ public:
     using contract::contract;
 
     struct OUTCOME {
-        double  odds;
-        int32_t template_id; //-1 is equal to no NFT being minted
-        string  mint_number_attribute_name; //"" if no mint number attribute should be set
-        string  seed_attribute_name; //"" if no seed attribute should be set
+        uint32_t odds;
+        int32_t  template_id; //-1 is equal to no NFT being minted
+        string   mint_number_attribute_name; //"" if no mint number attribute should be set
+        string   seed_attribute_name; //"" if no seed attribute should be set
     };
 
 
@@ -30,7 +30,8 @@ public:
     ACTION addpackroll(
         name authorized_account,
         uint64_t pack_id,
-        vector <OUTCOME> outcomes
+        vector <OUTCOME> outcomes,
+        uint32_t total_odds
     );
 
     ACTION delpackroll(
@@ -83,7 +84,7 @@ public:
         string memo
     );
 
-    [[eosio::on_notify("22testassets::transfer")]] void receive_asset_transfer(
+    [[eosio::on_notify("atomicassets::transfer")]] void receive_asset_transfer(
         name from,
         name to,
         vector <uint64_t> asset_ids,
@@ -113,6 +114,7 @@ private:
     TABLE packrolls_s {
         uint64_t         roll_id;
         vector <OUTCOME> outcomes;
+        uint32_t         total_odds;
 
         uint64_t primary_key() const { return roll_id; }
     };

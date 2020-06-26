@@ -14,6 +14,8 @@ ACTION atomicpacks::announcepack(
     require_auth(authorized_account);
     check_has_collection_auth(authorized_account, collection_name);
 
+    check_has_collection_auth(get_self(), collection_name);
+
     uint64_t pack_id = packs.available_primary_key();
     packs.emplace(authorized_account, [&](auto &_pack) {
         _pack.pack_id = pack_id;
@@ -36,7 +38,8 @@ ACTION atomicpacks::announcepack(
 ACTION atomicpacks::addpackroll(
     name authorized_account,
     uint64_t pack_id,
-    vector <OUTCOME> outcomes
+    vector <OUTCOME> outcomes,
+    uint32_t total_odds
 ) {
     require_auth(authorized_account);
 
@@ -50,11 +53,12 @@ ACTION atomicpacks::addpackroll(
     atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
     atomicassets::schemas_t col_schemas = atomicassets::get_schemas(pack_itr->collection_name);
 
-    double total_odds = 0.0;
+    uint32_t total_counted_odds = 0;
 
     for (OUTCOME outcome : outcomes) {
-        check(outcome.odds > 0.0, "Each outcome must have positive odds");
-        total_odds += outcome.odds;
+        check(outcome.odds > 0, "Each outcome must have positive odds");
+        total_counted_odds += outcome.odds;
+        check(total_counted_odds >= outcome.odds, "The total odds can't be more than 2^32 - 1");
 
         if (outcome.template_id != -1) {
             check(outcome.template_id > 0, "The tempalte id of an outcome must either be -1 or positive");
@@ -91,7 +95,8 @@ ACTION atomicpacks::addpackroll(
         }
     }
 
-    check(total_odds == 1.0, "The sum of all odds must be 1.0");
+    check(total_counted_odds == total_odds,
+        "The total odds of the outcomes deos not equal the provided total odds");
 
 
     uint64_t roll_id = pack_itr->roll_counter;
@@ -104,6 +109,7 @@ ACTION atomicpacks::addpackroll(
     packrolls.emplace(authorized_account, [&](auto &_roll) {
         _roll.roll_id = roll_id;
         _roll.outcomes = outcomes;
+        _roll.total_odds = total_odds;
     });
 }
 

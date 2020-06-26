@@ -17,7 +17,7 @@ using namespace std;
 namespace atomicassets {
     static constexpr double MAX_MARKET_FEE = 0.15;
 
-    static constexpr name ATOMICASSETS_ACCOUNT = name("22testassets");
+    static constexpr name ATOMICASSETS_ACCOUNT = name("atomicassets");
 
     //Custom vector types need to be defined because otherwise a bug in the ABI serialization
     //would cause the ABI to be invalid

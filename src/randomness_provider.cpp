@@ -18,8 +18,8 @@ public:
         return value;
     }
 
-    double get_rand() {
-        return (double) get_uint64() / (double) ULLONG_MAX;
+    uint32_t get_rand(uint32_t max_value) {
+        return get_uint64() % ((uint64_t) max_value + 1);
     }
 
 private:
