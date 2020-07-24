@@ -1,9 +1,5 @@
 #include <atomicpacks.hpp>
 
-#include <eosio/crypto.hpp>
-#include <eosio/transaction.hpp>
-#include <eosio/print.hpp>
-
 #include "randomness_provider.cpp"
 
 
@@ -145,13 +141,15 @@ ACTION atomicpacks::receiverand(
 
             for (const OUTCOME &outcome : roll_itr->outcomes) {
                 summed_odds += outcome.odds;
-                if (summed_odds >= rand) {
-                    //If the template of this outcome has already reached its max supply,
-                    //a new random value is used until an outcome is found which has a template
-                    //that has not yet reached its max supply.
-                    auto template_itr = col_templates.find(outcome.template_id);
-                    if (template_itr->max_supply != 0 && template_itr->issued_supply == template_itr->max_supply) {
-                        break;
+                if (summed_odds > rand) {
+                    if (outcome.template_id != -1) {
+                        //If the template of this outcome has already reached its max supply,
+                        //a new random value is used until an outcome is found which has a template
+                        //that has not yet reached its max supply.
+                        auto template_itr = col_templates.find(outcome.template_id);
+                        if (template_itr->max_supply != 0 && template_itr->issued_supply == template_itr->max_supply) {
+                            break;
+                        }
                     }
 
                     //112 Scope, 8 roll_id, 4 template id, 2 x 1 string overhead, 8 seed

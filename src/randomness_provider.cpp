@@ -19,7 +19,7 @@ public:
     }
 
     uint32_t get_rand(uint32_t max_value) {
-        return get_uint64() % ((uint64_t) max_value + 1);
+        return get_uint64() % ((uint64_t) max_value);
     }
 
 private:

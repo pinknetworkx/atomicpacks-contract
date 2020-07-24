@@ -2,6 +2,8 @@
 
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
+#include <eosio/crypto.hpp>
+#include <eosio/transaction.hpp>
 
 #include <atomicassets-interface.hpp>
 #include <ram-interface.hpp>
