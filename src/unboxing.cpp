@@ -40,19 +40,9 @@ ACTION atomicpacks::claimunboxed(
             //If the maximum supply for a template is already reached, the only option is to skip it
             //This can only happen if the supplies change between the time of receiving the randomness and claiming
             if (template_itr->max_supply == 0 || template_itr->issued_supply < template_itr->max_supply) {
-                atomicassets::ATTRIBUTE_MAP immutable_data = {};
+                atomicassets::ATTRIBUTE_MAP empty_data = {};
                 atomicassets::ATTRIBUTE_MAP mutable_data = {};
                 vector <asset> tokens_to_back = {};
-
-                if (unboxasset_itr->mint_number_attribute_name != "") {
-                    immutable_data[unboxasset_itr->mint_number_attribute_name] =
-                        (uint32_t) template_itr->issued_supply + 1;
-                    ram_cost_delta += 1 + get_varint_size(template_itr->issued_supply + 1);
-                }
-                if (unboxasset_itr->seed_attribute_name != "") {
-                    immutable_data[unboxasset_itr->seed_attribute_name] = unboxasset_itr->seed;
-                    ram_cost_delta += 9;
-                }
 
                 action(
                     permission_level{get_self(), name("active")},
@@ -64,8 +54,8 @@ ACTION atomicpacks::claimunboxed(
                         template_itr->schema_name,
                         template_itr->template_id,
                         unboxpack_itr->unboxer,
-                        immutable_data,
-                        mutable_data,
+                        empty_data,
+                        empty_data,
                         tokens_to_back
                     )
                 ).send();
@@ -75,8 +65,7 @@ ACTION atomicpacks::claimunboxed(
         }
 
         unboxassets.erase(unboxasset_itr);
-        ram_cost_delta -=
-            134 + unboxasset_itr->mint_number_attribute_name.length() + unboxasset_itr->seed_attribute_name.length();
+        ram_cost_delta -= 124;
     }
 
     if (mint_at_least_one) {
@@ -152,16 +141,12 @@ ACTION atomicpacks::receiverand(
                         }
                     }
 
-                    //112 Scope, 8 roll_id, 4 template id, 2 x 1 string overhead, 8 seed
-                    total_ram_cost +=
-                        134 + outcome.mint_number_attribute_name.length() + outcome.seed_attribute_name.length();
+                    //112 Scope, 8 roll_id, 4 template id
+                    total_ram_cost += 124;
 
                     unboxassets.emplace(get_self(), [&](auto &_unboxasset) {
                         _unboxasset.origin_roll_id = roll_itr->roll_id;
                         _unboxasset.template_id = outcome.template_id;
-                        _unboxasset.mint_number_attribute_name = outcome.mint_number_attribute_name;
-                        _unboxasset.seed_attribute_name = outcome.seed_attribute_name;
-                        _unboxasset.seed = outcome.seed_attribute_name == "" ? 0 : randomness_provider.get_uint64();
                     });
 
                     found_result = true;
@@ -236,10 +221,10 @@ void atomicpacks::receive_asset_transfer(
     }
 
     //112 for the unboxassets scope
-    //262 bytes is the maximum size that each unboxassets table entry can have, because the attribute
+    //197 bytes is the maximum size that each unboxassets table entry can have, because the attribute
     //names are limited to 64 chars max in AtomicAssets
     packrolls_t packrolls = get_packrolls(pack_itr->pack_id);
-    int64_t reserved_ram_bytes = 112 + std::distance(packrolls.begin(), packrolls.end()) * 262;
+    int64_t reserved_ram_bytes = 112 + std::distance(packrolls.begin(), packrolls.end()) * 197;
 
     //144 for the unboxpacks entry (112 scope + 4 x 8)
     //120 for the signvals entry in the rng oracle contract

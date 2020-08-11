@@ -19,8 +19,6 @@ public:
     struct OUTCOME {
         uint32_t odds;
         int32_t  template_id; //-1 is equal to no NFT being minted
-        string   mint_number_attribute_name; //"" if no mint number attribute should be set
-        string   seed_attribute_name; //"" if no seed attribute should be set
     };
 
 
@@ -128,9 +126,6 @@ private:
     TABLE unboxassets_s {
         uint64_t origin_roll_id;
         int32_t  template_id;
-        string   mint_number_attribute_name;
-        string   seed_attribute_name;
-        uint64_t seed; //0 if no seed attribute is used
 
         uint64_t primary_key() const { return origin_roll_id; }
     };
@@ -181,8 +176,6 @@ private:
 
     void check_has_collection_auth(name account_to_check, name collection_name);
 
-
-    uint64_t get_varint_size(uint64_t number_to_serialize);
 
     void increase_ram_balance(name account, int64_t bytes);
 

@@ -62,36 +62,9 @@ ACTION atomicpacks::addpackroll(
 
         if (outcome.template_id != -1) {
             check(outcome.template_id > 0, "The tempalte id of an outcome must either be -1 or positive");
-            auto template_itr = col_templates.require_find(outcome.template_id,
+            col_templates.require_find(outcome.template_id,
                 ("At least one template id of an outcome does not exist within the collection: " +
                  to_string(outcome.template_id)).c_str());
-            auto schema_itr = col_schemas.find(template_itr->schema_name.value);
-
-            //If a minut number attribute name is specified, it needs to exist in the template's schema format
-            if (outcome.mint_number_attribute_name != "") {
-                check(std::find_if(
-                    schema_itr->format.begin(),
-                    schema_itr->format.end(),
-                    [&outcome](const atomicassets::FORMAT format) {
-                        return format.name == outcome.mint_number_attribute_name && format.type == "uint32";
-                    }
-                    ) != schema_itr->format.end(),
-                    "The specified mint number attribute (" + outcome.mint_number_attribute_name +
-                    ") does not exist in the schema of template " + to_string(outcome.template_id));
-            }
-
-            //If a seed attribute name is specified, it needs to exist in the template's schema format
-            if (outcome.seed_attribute_name != "") {
-                check(std::find_if(
-                    schema_itr->format.begin(),
-                    schema_itr->format.end(),
-                    [&outcome](const atomicassets::FORMAT format) {
-                        return format.name == outcome.seed_attribute_name && format.type == "fixed64";
-                    }
-                    ) != schema_itr->format.end(),
-                    "The specified seed attribute (" + outcome.mint_number_attribute_name +
-                    ") does not exist in the schema of template " + to_string(outcome.template_id));
-            }
         }
     }
 

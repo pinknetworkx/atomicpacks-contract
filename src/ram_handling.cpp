@@ -113,21 +113,6 @@ void atomicpacks::receive_token_transfer(
 
 
 /**
-* Calculates the amount of bytes that an integer will take up when serialized as a varint
-*/
-uint64_t atomicpacks::get_varint_size(
-    uint64_t number_to_serialize
-) {
-    uint64_t byte_cost = 1;
-    while (number_to_serialize >= 128) {
-        byte_cost++;
-        number_to_serialize /= 128;
-    }
-    return byte_cost;
-}
-
-
-/**
 * Internal function to increase the ram balance of an account
 */
 void atomicpacks::increase_ram_balance(
