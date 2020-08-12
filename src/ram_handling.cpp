@@ -10,8 +10,7 @@ ACTION atomicpacks::withdrawram(
 ) {
     require_auth(from);
 
-    check(decrease_ram_balance(from, bytes),
-        "The account does not have a sufficient ram balance");
+    decrease_ram_balance(from, bytes, "The account does not have a sufficient ram balance");
 
     asset payout = ram::get_sell_ram_quantity(bytes);
 
@@ -55,7 +54,8 @@ ACTION atomicpacks::addcolram(
     atomicassets::collections.require_find(to_collection_name.value,
         "No collection with this name exists");
 
-    decrease_ram_balance(from_account, bytes);
+    decrease_ram_balance(from_account, bytes,
+        "The account does not have enough RAM balance");
     increase_collection_ram_balance(to_collection_name, bytes);
 }
 
@@ -75,7 +75,8 @@ ACTION atomicpacks::removecolram(
 
     check(bytes > 0, "bytes must be positive");
 
-    decrease_collection_ram_balance(from_collection_name, bytes);
+    decrease_collection_ram_balance(from_collection_name, bytes,
+        "The collection does not have enough RAM balance");
     increase_ram_balance(to_account, bytes);
 }
 
@@ -137,18 +138,17 @@ void atomicpacks::increase_ram_balance(
 
 /**
 * Internal function to decrease the ram balance of an account
-* Returns true if the account has enough bytes, otherwise false
+* Throws if the account does not have enough balance
 */
-bool atomicpacks::decrease_ram_balance(
+void atomicpacks::decrease_ram_balance(
     name account,
-    int64_t bytes
+    int64_t bytes,
+    string error_message
 ) {
     check(bytes > 0, "decrease balance bytes must be positive");
 
     auto itr = rambalances.find(account.value);
-    if (itr == rambalances.end() || itr->byte_balance < bytes) {
-        return false;
-    }
+    check(itr != rambalances.end() && itr->byte_balance >= bytes, error_message);
 
     if (itr->byte_balance == bytes) {
         rambalances.erase(itr);
@@ -157,7 +157,6 @@ bool atomicpacks::decrease_ram_balance(
             _rambalance.byte_balance -= bytes;
         });
     }
-    return true;
 }
 
 
@@ -186,18 +185,17 @@ void atomicpacks::increase_collection_ram_balance(
 
 /**
 * Internal function to decrease the ram balance of a collection
-* Returns true if the collection has enough bytes, otherwise false
+* Throws if the collection does not have enough balance
 */
-bool atomicpacks::decrease_collection_ram_balance(
+void atomicpacks::decrease_collection_ram_balance(
     name collection_name,
-    int64_t bytes
+    int64_t bytes,
+    string error_message
 ) {
     check(bytes > 0, "decrease balance bytes must be positive");
 
     auto itr = colbalances.find(collection_name.value);
-    if (itr == colbalances.end() || itr->byte_balance < bytes) {
-        return false;
-    }
+    check(itr != colbalances.end() && itr->byte_balance >= bytes, error_message);
 
     if (itr->byte_balance == bytes) {
         colbalances.erase(itr);
@@ -206,5 +204,4 @@ bool atomicpacks::decrease_collection_ram_balance(
             _colbalance.byte_balance -= bytes;
         });
     }
-    return true;
 }

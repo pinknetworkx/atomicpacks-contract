@@ -83,7 +83,7 @@ ACTION atomicpacks::claimunboxed(
     }
 
     if (ram_cost_delta > 0) {
-        check(decrease_collection_ram_balance(pack_itr->collection_name, ram_cost_delta),
+        decrease_collection_ram_balance(pack_itr->collection_name, ram_cost_delta,
             "The collection does not have enough RAM to mint the assets");
     } else if (ram_cost_delta < 0) {
         increase_collection_ram_balance(pack_itr->collection_name, -ram_cost_delta);
@@ -158,8 +158,8 @@ ACTION atomicpacks::receiverand(
 
     if (total_ram_cost >= 0) {
         //This should never happen because of the reserved RAM
-        check(decrease_collection_ram_balance(pack_itr->collection_name, total_ram_cost + 112),
-            "The collection does not have enough RAM to pay for the unboxassets entries.");
+        decrease_collection_ram_balance(pack_itr->collection_name, total_ram_cost + 112,
+            "The collection does not have enough RAM to pay for the unboxassets entries");
     }
 }
 
@@ -228,7 +228,7 @@ void atomicpacks::receive_asset_transfer(
 
     //144 for the unboxpacks entry (112 scope + 4 x 8)
     //120 for the signvals entry in the rng oracle contract
-    check(decrease_collection_ram_balance(pack_itr->collection_name, reserved_ram_bytes + 144 + 120),
+    decrease_collection_ram_balance(pack_itr->collection_name, reserved_ram_bytes + 144 + 120,
         "The collection does not have enough RAM to pay for the reserved bytes");
 
     unboxpacks.emplace(get_self(), [&](auto &_unboxpack) {

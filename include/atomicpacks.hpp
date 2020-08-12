@@ -179,9 +179,9 @@ private:
 
     void increase_ram_balance(name account, int64_t bytes);
 
-    bool decrease_ram_balance(name account, int64_t bytes);
+    void decrease_ram_balance(name account, int64_t bytes, string error_message);
 
     void increase_collection_ram_balance(name collection_name, int64_t bytes);
 
-    bool decrease_collection_ram_balance(name collection_name, int64_t bytes);
+    void decrease_collection_ram_balance(name collection_name, int64_t bytes, string error_message);
 };
