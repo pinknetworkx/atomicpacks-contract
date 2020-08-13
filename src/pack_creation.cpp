@@ -23,6 +23,17 @@ ACTION atomicpacks::announcepack(
         _pack.template_id = -1;
         _pack.roll_counter = 0;
     });
+
+
+    action(
+        permission_level{get_self(), name("active")},
+        atomicassets::ATOMICASSETS_ACCOUNT,
+        name("lognewpack"),
+        std::make_tuple(
+            pack_id,
+            collection_name
+        )
+    ).send();
 }
 
 
@@ -53,7 +64,7 @@ ACTION atomicpacks::addpackroll(
     check(outcomes.size() != 0, "A roll must include at least one outcome");
 
     atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
-    
+
     uint32_t total_counted_odds = 0;
 
     for (OUTCOME outcome : outcomes) {
@@ -85,6 +96,19 @@ ACTION atomicpacks::addpackroll(
         _roll.outcomes = outcomes;
         _roll.total_odds = total_odds;
     });
+
+
+    action(
+        permission_level{get_self(), name("active")},
+        atomicassets::ATOMICASSETS_ACCOUNT,
+        name("lognewroll"),
+        std::make_tuple(
+            pack_id,
+            roll_id,
+            outcomes,
+            total_odds
+        )
+    ).send();
 }
 
 
@@ -155,4 +179,22 @@ ACTION atomicpacks::completepack(
     packs.modify(pack_itr, same_payer, [&](auto &_pack) {
         _pack.template_id = template_id;
     });
+}
+
+
+ACTION atomicpacks::lognewpack(
+    uint64_t pack_id,
+    name collection_name
+) {
+    require_auth(get_self());
+}
+
+
+ACTION atomicpacks::lognewroll(
+    uint64_t pack_id,
+    uint64_t roll_id,
+    vector <OUTCOME> outocmes,
+    uint32_t total_odds
+) {
+    require_auth(get_self());
 }

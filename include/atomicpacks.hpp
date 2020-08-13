@@ -53,6 +53,19 @@ public:
     );
 
 
+    ACTION lognewpack(
+        uint64_t pack_id,
+        name collection_name
+    );
+
+    ACTION lognewroll(
+        uint64_t pack_id,
+        uint64_t roll_id,
+        vector <OUTCOME> outocmes,
+        uint32_t total_odds
+    );
+
+
     ACTION withdrawram(
         name from,
         int64_t bytes

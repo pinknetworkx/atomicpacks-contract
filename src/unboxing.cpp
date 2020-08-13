@@ -138,7 +138,7 @@ ACTION atomicpacks::receiverand(
                 });
                 break;
             }
-        }        
+        }
     }
 }
 
