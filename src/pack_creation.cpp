@@ -50,21 +50,22 @@ ACTION atomicpacks::addpackroll(
     check(pack_itr->template_id == -1, "The pack has already been completed");
 
 
-    atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
-    atomicassets::schemas_t col_schemas = atomicassets::get_schemas(pack_itr->collection_name);
+    check(outcomes.size() != 0, "A roll must include at least one outcome");
 
+    atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
+    
     uint32_t total_counted_odds = 0;
 
     for (OUTCOME outcome : outcomes) {
         check(outcome.odds > 0, "Each outcome must have positive odds");
         total_counted_odds += outcome.odds;
-        check(total_counted_odds >= outcome.odds, "The total odds can't be more than 2^32 - 1");
+        check(total_counted_odds >= outcome.odds, "Overflow: Total odds can't be more than 2^32 - 1");
 
         if (outcome.template_id != -1) {
-            check(outcome.template_id > 0, "The tempalte id of an outcome must either be -1 or positive");
-            col_templates.require_find(outcome.template_id,
+            auto template_itr = col_templates.require_find(outcome.template_id,
                 ("At least one template id of an outcome does not exist within the collection: " +
                  to_string(outcome.template_id)).c_str());
+            check(template_itr->max_supply == 0, "Can only use templates without a max supply");
         }
     }
 

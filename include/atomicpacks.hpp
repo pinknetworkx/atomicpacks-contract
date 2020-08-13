@@ -122,6 +122,17 @@ private:
     typedef multi_index<name("packrolls"), packrolls_s> packrolls_t;
 
 
+    TABLE unboxpacks_s {
+        uint64_t pack_asset_id;
+        uint64_t pack_id;
+        name     unboxer;
+
+        uint64_t primary_key() const { return pack_asset_id; }
+    };
+
+    typedef multi_index<name("unboxpacks"), unboxpacks_s> unboxpacks_t;
+
+
     //Scope asset id of pack opened
     TABLE unboxassets_s {
         uint64_t origin_roll_id;
@@ -131,18 +142,6 @@ private:
     };
 
     typedef multi_index<name("unboxassets"), unboxassets_s> unboxassets_t;
-
-
-    TABLE unboxpacks_s {
-        uint64_t pack_asset_id;
-        uint64_t pack_id;
-        name     unboxer;
-        int64_t  reserved_ram_bytes;
-
-        uint64_t primary_key() const { return pack_asset_id; }
-    };
-
-    typedef multi_index<name("unboxpacks"), unboxpacks_s> unboxpacks_t;
 
 
     TABLE rambalances_s {
@@ -177,6 +176,7 @@ private:
     void check_has_collection_auth(name account_to_check, name collection_name);
 
 
+    //RAM Handlling
     void increase_ram_balance(name account, int64_t bytes);
 
     void decrease_ram_balance(name account, int64_t bytes, string error_message);

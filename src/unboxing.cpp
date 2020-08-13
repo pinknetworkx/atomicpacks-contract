@@ -33,16 +33,16 @@ ACTION atomicpacks::claimunboxed(
 
     for (uint64_t roll_id : origin_roll_ids) {
         auto unboxasset_itr = unboxassets.require_find(roll_id,
-            ("No unbox asset with the origin roll id " + to_string(roll_id) + " does not exist").c_str());
+            ("No unbox asset with the origin roll id " + to_string(roll_id) + " exists").c_str());
 
+        //Template -1 means no asset will be created
         if (unboxasset_itr->template_id != -1) {
             auto template_itr = col_templates.find(unboxasset_itr->template_id);
-            //If the maximum supply for a template is already reached, the only option is to skip it
-            //This can only happen if the supplies change between the time of receiving the randomness and claiming
-            if (template_itr->max_supply == 0 || template_itr->issued_supply < template_itr->max_supply) {
-                atomicassets::ATTRIBUTE_MAP empty_data = {};
-                atomicassets::ATTRIBUTE_MAP mutable_data = {};
-                vector <asset> tokens_to_back = {};
+
+            //Templates with maximum supply are not supported
+            //Templates are guaranteed not to have a maximum supply when the packs are created
+            //however the template could be locked later, in which case it is skipped here
+            if (template_itr->max_supply == 0) {
 
                 action(
                     permission_level{get_self(), name("active")},
@@ -54,13 +54,16 @@ ACTION atomicpacks::claimunboxed(
                         template_itr->schema_name,
                         template_itr->template_id,
                         unboxpack_itr->unboxer,
-                        empty_data,
-                        empty_data,
-                        tokens_to_back
+                        (atomicassets::ATTRIBUTE_MAP) {},
+                        (atomicassets::ATTRIBUTE_MAP) {},
+                        (vector <asset>) {}
                     )
                 ).send();
+
                 mint_at_least_one = true;
+                //Minimum size asset = 151
                 ram_cost_delta += 151;
+
             }
         }
 
@@ -75,10 +78,11 @@ ACTION atomicpacks::claimunboxed(
             ram_cost_delta += 112;
         }
     }
+
     if (unboxassets.begin() == unboxassets.end()) {
         unboxpacks.erase(unboxpack_itr);
-        //Unboxassets table scope 112 + unboxpacks entry 144
-        ram_cost_delta -= 256;
+        //Unboxassets table scope 112 + unboxpacks entry 136
+        ram_cost_delta -= 248;
 
     }
 
@@ -109,10 +113,9 @@ ACTION atomicpacks::receiverand(
 
     RandomnessProvider randomness_provider(random_value);
 
-    auto unboxpack_itr = unboxpacks.find(assoc_id);
 
+    auto unboxpack_itr = unboxpacks.find(assoc_id);
     auto pack_itr = packs.find(unboxpack_itr->pack_id);
-    increase_collection_ram_balance(pack_itr->collection_name, unboxpack_itr->reserved_ram_bytes);
 
 
     atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
@@ -120,46 +123,22 @@ ACTION atomicpacks::receiverand(
     packrolls_t packrolls = get_packrolls(unboxpack_itr->pack_id);
     unboxassets_t unboxassets = get_unboxassets(unboxpack_itr->pack_asset_id);
 
-    int64_t total_ram_cost = 0;
-
     for (auto roll_itr = packrolls.begin(); roll_itr != packrolls.end(); roll_itr++) {
-        bool found_result = false;
-        while (!found_result) {
-            uint32_t rand = randomness_provider.get_rand(roll_itr->total_odds);
-            uint32_t summed_odds = 0;
 
-            for (const OUTCOME &outcome : roll_itr->outcomes) {
-                summed_odds += outcome.odds;
-                if (summed_odds > rand) {
-                    if (outcome.template_id != -1) {
-                        //If the template of this outcome has already reached its max supply,
-                        //a new random value is used until an outcome is found which has a template
-                        //that has not yet reached its max supply.
-                        auto template_itr = col_templates.find(outcome.template_id);
-                        if (template_itr->max_supply != 0 && template_itr->issued_supply == template_itr->max_supply) {
-                            break;
-                        }
-                    }
+        uint32_t rand = randomness_provider.get_rand(roll_itr->total_odds);
+        uint32_t summed_odds = 0;
 
-                    //112 Scope, 8 roll_id, 4 template id
-                    total_ram_cost += 124;
-
-                    unboxassets.emplace(get_self(), [&](auto &_unboxasset) {
-                        _unboxasset.origin_roll_id = roll_itr->roll_id;
-                        _unboxasset.template_id = outcome.template_id;
-                    });
-
-                    found_result = true;
-                    break;
-                }
+        for (const OUTCOME &outcome : roll_itr->outcomes) {
+            summed_odds += outcome.odds;
+            if (summed_odds > rand) {
+                //RAM has already been paid when the pack was received / burned with the reserved_ram_bytes
+                unboxassets.emplace(get_self(), [&](auto &_unboxasset) {
+                    _unboxasset.origin_roll_id = roll_itr->roll_id;
+                    _unboxasset.template_id = outcome.template_id;
+                });
+                break;
             }
-        }
-    }
-
-    if (total_ram_cost >= 0) {
-        //This should never happen because of the reserved RAM
-        decrease_collection_ram_balance(pack_itr->collection_name, total_ram_cost + 112,
-            "The collection does not have enough RAM to pay for the unboxassets entries");
+        }        
     }
 }
 
@@ -209,7 +188,7 @@ void atomicpacks::receive_asset_transfer(
     size_t size = transaction_size();
     char buf[size];
     uint32_t read = read_transaction(buf, size);
-    check(size == read, "read_transaction() has failed.");
+    check(size == read, "Signing value generation: read_transaction() has failed.");
     checksum256 tx_id = eosio::sha256(buf, read);
     uint64_t signing_value;
     memcpy(&signing_value, &tx_id, sizeof(signing_value));
@@ -220,22 +199,21 @@ void atomicpacks::receive_asset_transfer(
         signing_value++;
     }
 
+    //This amount of RAM will be needed to fill the packrolls table when the randomness is received
     //112 for the unboxassets scope
-    //197 bytes is the maximum size that each unboxassets table entry can have, because the attribute
-    //names are limited to 64 chars max in AtomicAssets
+    //124 for each unboxassets row
     packrolls_t packrolls = get_packrolls(pack_itr->pack_id);
-    int64_t reserved_ram_bytes = 112 + std::distance(packrolls.begin(), packrolls.end()) * 197;
+    int64_t reserved_ram_bytes = 112 + std::distance(packrolls.begin(), packrolls.end()) * 124;
 
-    //144 for the unboxpacks entry (112 scope + 4 x 8)
+    //136 for the unboxpacks entry (112 scope + 3 x 8)
     //120 for the signvals entry in the rng oracle contract
-    decrease_collection_ram_balance(pack_itr->collection_name, reserved_ram_bytes + 144 + 120,
+    decrease_collection_ram_balance(pack_itr->collection_name, reserved_ram_bytes + 136 + 120,
         "The collection does not have enough RAM to pay for the reserved bytes");
 
     unboxpacks.emplace(get_self(), [&](auto &_unboxpack) {
         _unboxpack.pack_asset_id = asset_ids[0];
         _unboxpack.pack_id = pack_itr->pack_id;
         _unboxpack.unboxer = from;
-        _unboxpack.reserved_ram_bytes = reserved_ram_bytes;
     });
 
     action(
