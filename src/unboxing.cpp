@@ -140,6 +140,17 @@ ACTION atomicpacks::receiverand(
             }
         }
     }
+
+
+    action(
+        permission_level{get_self(), name("active")},
+        atomicassets::ATOMICASSETS_ACCOUNT,
+        name("burnasset"),
+        std::make_tuple(
+            get_self(),
+            assoc_id
+        )
+    ).send();
 }
 
 
@@ -169,17 +180,9 @@ void atomicpacks::receive_asset_transfer(
     auto packs_by_template_id = packs.get_index<name("templateid")>();
     auto pack_itr = packs_by_template_id.require_find(asset_itr->template_id,
         "The transferred asset's template does not belong to any pack");
-
-
-    action(
-        permission_level{get_self(), name("active")},
-        atomicassets::ATOMICASSETS_ACCOUNT,
-        name("burnasset"),
-        std::make_tuple(
-            get_self(),
-            asset_ids[0]
-        )
-    ).send();
+    
+    check(pack_itr->unlock_time <= current_time_point().sec_since_epoch(),
+        "The pack has not unlocked yet");
 
 
     //Get signing value from transaction id

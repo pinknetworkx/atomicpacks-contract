@@ -9,7 +9,8 @@
 */
 ACTION atomicpacks::announcepack(
     name authorized_account,
-    name collection_name
+    name collection_name,
+    uint32_t unlock_time
 ) {
     require_auth(authorized_account);
     check_has_collection_auth(authorized_account, collection_name);
@@ -20,6 +21,7 @@ ACTION atomicpacks::announcepack(
     packs.emplace(authorized_account, [&](auto &_pack) {
         _pack.pack_id = pack_id;
         _pack.collection_name = collection_name;
+        _pack.unlock_time = unlock_time;
         _pack.template_id = -1;
         _pack.roll_counter = 0;
     });
@@ -31,7 +33,8 @@ ACTION atomicpacks::announcepack(
         name("lognewpack"),
         std::make_tuple(
             pack_id,
-            collection_name
+            collection_name,
+            unlock_time
         )
     ).send();
 }
@@ -184,7 +187,8 @@ ACTION atomicpacks::completepack(
 
 ACTION atomicpacks::lognewpack(
     uint64_t pack_id,
-    name collection_name
+    name collection_name,
+    uint32_t unlock_time
 ) {
     require_auth(get_self());
 }

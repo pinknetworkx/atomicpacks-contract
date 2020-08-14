@@ -24,7 +24,8 @@ public:
 
     ACTION announcepack(
         name authorized_account,
-        name collection_name
+        name collection_name,
+        uint32_t unlock_time
     );
 
     ACTION addpackroll(
@@ -55,7 +56,8 @@ public:
 
     ACTION lognewpack(
         uint64_t pack_id,
-        name collection_name
+        name collection_name,
+        uint32_t unlock_time
     );
 
     ACTION lognewroll(
@@ -110,6 +112,7 @@ private:
     TABLE packs_s {
         uint64_t pack_id;
         name     collection_name;
+        uint32_t unlock_time;
         int32_t  template_id  = -1; //-1 if the pack has not been activated yet
         uint64_t roll_counter = 0;
 
