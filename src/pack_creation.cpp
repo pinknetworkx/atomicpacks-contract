@@ -66,6 +66,13 @@ ACTION atomicpacks::addpackroll(
 
     check(outcomes.size() != 0, "A roll must include at least one outcome");
 
+    //Outcomes with high odds are moved to the beginning, which will mean that on average less
+    //outcomes will have to be checked when randomness is received later without changing the actual odds
+    std::sort(outcomes.begin(), outcomes.end(), [&](const OUTCOME &left, const OUTCOME &right) {
+        return left.odds > right.odds;
+    });
+
+
     atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
 
     uint32_t total_counted_odds = 0;
