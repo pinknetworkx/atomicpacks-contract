@@ -29,7 +29,7 @@ ACTION atomicpacks::announcepack(
 
     action(
         permission_level{get_self(), name("active")},
-        atomicassets::ATOMICASSETS_ACCOUNT,
+        get_self(),
         name("lognewpack"),
         std::make_tuple(
             pack_id,
@@ -103,7 +103,7 @@ ACTION atomicpacks::addpackroll(
 
     action(
         permission_level{get_self(), name("active")},
-        atomicassets::ATOMICASSETS_ACCOUNT,
+        get_self(),
         name("lognewroll"),
         std::make_tuple(
             pack_id,
