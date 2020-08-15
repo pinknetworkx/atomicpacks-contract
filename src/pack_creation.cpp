@@ -66,19 +66,18 @@ ACTION atomicpacks::addpackroll(
 
     check(outcomes.size() != 0, "A roll must include at least one outcome");
 
-    //Outcomes with high odds are moved to the beginning, which will mean that on average less
-    //outcomes will have to be checked when randomness is received later without changing the actual odds
-    std::sort(outcomes.begin(), outcomes.end(), [&](const OUTCOME &left, const OUTCOME &right) {
-        return left.odds > right.odds;
-    });
-
 
     atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
 
     uint32_t total_counted_odds = 0;
+    uint32_t last_odds = UINT_MAX;
 
     for (OUTCOME outcome : outcomes) {
         check(outcome.odds > 0, "Each outcome must have positive odds");
+        check(outcome.odds <= last_odds,
+            "The outcomes must be sorted in descending order based on their odds");
+        last_odds = outcome.odds;
+
         total_counted_odds += outcome.odds;
         check(total_counted_odds >= outcome.odds, "Overflow: Total odds can't be more than 2^32 - 1");
 
@@ -114,9 +113,7 @@ ACTION atomicpacks::addpackroll(
         name("lognewroll"),
         std::make_tuple(
             pack_id,
-            roll_id,
-            outcomes,
-            total_odds
+            roll_id
         )
     ).send();
 }
@@ -203,9 +200,7 @@ ACTION atomicpacks::lognewpack(
 
 ACTION atomicpacks::lognewroll(
     uint64_t pack_id,
-    uint64_t roll_id,
-    vector <OUTCOME> outocmes,
-    uint32_t total_odds
+    uint64_t roll_id
 ) {
     require_auth(get_self());
 }

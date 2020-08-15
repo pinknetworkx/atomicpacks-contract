@@ -123,6 +123,8 @@ ACTION atomicpacks::receiverand(
     packrolls_t packrolls = get_packrolls(unboxpack_itr->pack_id);
     unboxassets_t unboxassets = get_unboxassets(unboxpack_itr->pack_asset_id);
 
+    vector <int32_t> result_template_ids = {};
+
     for (auto roll_itr = packrolls.begin(); roll_itr != packrolls.end(); roll_itr++) {
 
         uint32_t rand = randomness_provider.get_rand(roll_itr->total_odds);
@@ -136,6 +138,7 @@ ACTION atomicpacks::receiverand(
                     _unboxasset.origin_roll_id = roll_itr->roll_id;
                     _unboxasset.template_id = outcome.template_id;
                 });
+                result_template_ids.push_back(outcome.template_id);
                 break;
             }
         }
@@ -149,6 +152,18 @@ ACTION atomicpacks::receiverand(
         std::make_tuple(
             get_self(),
             assoc_id
+        )
+    ).send();
+
+
+    action(
+        permission_level{get_self(), name("active")},
+        get_self(),
+        name("logresult"),
+        std::make_tuple(
+            assoc_id,
+            unboxpack_itr->pack_id,
+            result_template_ids
         )
     ).send();
 }
@@ -229,4 +244,13 @@ void atomicpacks::receive_asset_transfer(
             get_self()
         )
     ).send();
+}
+
+
+ACTION atomicpacks::logresult(
+    uint64_t pack_asset_id,
+    uint64_t pack_id,
+    vector<int32_t> template_ids
+) {
+    require_auth(get_self());
 }

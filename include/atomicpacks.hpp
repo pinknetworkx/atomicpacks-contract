@@ -62,9 +62,13 @@ public:
 
     ACTION lognewroll(
         uint64_t pack_id,
-        uint64_t roll_id,
-        vector <OUTCOME> outocmes,
-        uint32_t total_odds
+        uint64_t roll_id
+    );
+
+    ACTION logresult(
+        uint64_t pack_asset_id,
+        uint64_t pack_id,
+        vector<int32_t> template_ids
     );
 
 
