@@ -148,9 +148,12 @@ private:
         name     unboxer;
 
         uint64_t primary_key() const { return pack_asset_id; }
+        uint64_t by_unboxer() const { return unboxer.value; }
     };
 
-    typedef multi_index<name("unboxpacks"), unboxpacks_s> unboxpacks_t;
+    typedef multi_index<name("unboxpacks"), unboxpacks_s,
+        indexed_by < name("unboxer"), const_mem_fun < unboxpacks_s, uint64_t, &unboxpacks_s::by_unboxer>>>
+    unboxpacks_t;
 
 
     //Scope asset id of pack opened

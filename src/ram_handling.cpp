@@ -73,6 +73,8 @@ ACTION atomicpacks::removecolram(
     require_auth(authorized_account);
     check_has_collection_auth(authorized_account, from_collection_name);
 
+    check(is_account(to_account), "to_account does not exist");
+
     check(bytes > 0, "bytes must be positive");
 
     decrease_collection_ram_balance(from_collection_name, bytes,
@@ -124,9 +126,10 @@ void atomicpacks::increase_ram_balance(
 
     auto itr = rambalances.find(account.value);
     if (itr == rambalances.end()) {
+        check(bytes >= 128, "Must inrease the ram balance by at least 128 to pay for the table entry");
         rambalances.emplace(get_self(), [&](auto &_rambalance) {
             _rambalance.owner = account;
-            _rambalance.byte_balance = bytes;
+            _rambalance.byte_balance = bytes - 128;
         });
     } else {
         rambalances.modify(itr, same_payer, [&](auto &_rambalance) {
@@ -150,13 +153,9 @@ void atomicpacks::decrease_ram_balance(
     auto itr = rambalances.find(account.value);
     check(itr != rambalances.end() && itr->byte_balance >= bytes, error_message);
 
-    if (itr->byte_balance == bytes) {
-        rambalances.erase(itr);
-    } else {
-        rambalances.modify(itr, same_payer, [&](auto &_rambalance) {
-            _rambalance.byte_balance -= bytes;
-        });
-    }
+    rambalances.modify(itr, same_payer, [&](auto &_rambalance) {
+        _rambalance.byte_balance -= bytes;
+    });
 }
 
 
@@ -171,9 +170,10 @@ void atomicpacks::increase_collection_ram_balance(
 
     auto itr = colbalances.find(collection_name.value);
     if (itr == colbalances.end()) {
+        check(bytes >= 128, "Must inrease the collection ram balance by at least 128 to pay for the table entry");
         colbalances.emplace(get_self(), [&](auto &_colbalance) {
             _colbalance.collection_name = collection_name;
-            _colbalance.byte_balance = bytes;
+            _colbalance.byte_balance = bytes - 128;
         });
     } else {
         colbalances.modify(itr, same_payer, [&](auto &_colbalance) {
@@ -197,11 +197,7 @@ void atomicpacks::decrease_collection_ram_balance(
     auto itr = colbalances.find(collection_name.value);
     check(itr != colbalances.end() && itr->byte_balance >= bytes, error_message);
 
-    if (itr->byte_balance == bytes) {
-        colbalances.erase(itr);
-    } else {
-        colbalances.modify(itr, same_payer, [&](auto &_colbalance) {
-            _colbalance.byte_balance -= bytes;
-        });
-    }
+    colbalances.modify(itr, same_payer, [&](auto &_colbalance) {
+        _colbalance.byte_balance -= bytes;
+    });
 }

@@ -58,8 +58,9 @@ namespace ram {
         const int64_t ram_reserve = itr->base.balance.amount;
         const int64_t core_reserve = itr->quote.balance.amount;
 
-        int64_t amount = get_bancor_output(ram_reserve, core_reserve, bytes_to_sell);
-        return asset(amount, itr->quote.balance.symbol);
+        int64_t full_amount = get_bancor_output(ram_reserve, core_reserve, bytes_to_sell);
+        int64_t fee_amount = (full_amount + 199) / 200;
+        return asset(full_amount - fee_amount, itr->quote.balance.symbol);
     }
 
 
