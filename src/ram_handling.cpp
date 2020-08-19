@@ -94,7 +94,18 @@ void atomicpacks::receive_token_transfer(
     asset quantity,
     string memo
 ) {
-    if (to != get_self() || from == name("eosio.ram")) {
+    const set <name > ignore = set <name >{
+        // EOSIO system accounts
+        name("eosio.stake"),
+        name("eosio.names"),
+        name("eosio.ram"),
+        name("eosio.rex"),
+        name("eosio"),
+        // AtomicAssets might send tokens if the burned packs have tokens backed to them
+        atomicassets::ATOMICASSETS_ACCOUNT
+    };
+
+    if (to != get_self() || ignore.find(from) != ignore.end()) {
         return;
     }
 
