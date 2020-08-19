@@ -118,8 +118,6 @@ ACTION atomicpacks::receiverand(
     auto pack_itr = packs.find(unboxpack_itr->pack_id);
 
 
-    atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
-
     packrolls_t packrolls = get_packrolls(unboxpack_itr->pack_id);
     unboxassets_t unboxassets = get_unboxassets(unboxpack_itr->pack_asset_id);
 
