@@ -47,6 +47,18 @@ public:
         int32_t template_id
     );
 
+    ACTION setpacktime(
+        name authorized_account,
+        uint64_t pack_id,
+        uint32_t new_unlock_time
+    );
+
+    ACTION setpackdescr(
+        name authorized_account,
+        uint64_t pack_id,
+        string description
+    );
+
 
     ACTION claimunboxed(
         uint64_t pack_asset_id,
@@ -119,6 +131,7 @@ private:
         uint32_t unlock_time;
         int32_t  template_id  = -1; //-1 if the pack has not been activated yet
         uint64_t roll_counter = 0;
+        string   description;
 
         uint64_t primary_key() const { return pack_id; }
 

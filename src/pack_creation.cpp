@@ -24,6 +24,7 @@ ACTION atomicpacks::announcepack(
         _pack.unlock_time = unlock_time;
         _pack.template_id = -1;
         _pack.roll_counter = 0;
+        _pack.description = "";
     });
 
 
@@ -185,6 +186,45 @@ ACTION atomicpacks::completepack(
 
     packs.modify(pack_itr, same_payer, [&](auto &_pack) {
         _pack.template_id = template_id;
+    });
+}
+
+
+ACTION atomicpacks::setpacktime(
+    name authorized_account,
+    uint64_t pack_id,
+    uint32_t new_unlock_time
+) {
+    require_auth(authorized_account);
+
+    auto pack_itr = packs.require_find(pack_id, "No pack with this id exists");
+
+    check_has_collection_auth(authorized_account, pack_itr->collection_name);
+
+    check(pack_itr->template_id != -1, "The pack has not been completed yet");
+
+    check(new_unlock_time > current_time_point().sec_since_epoch(),
+        "The new unlock time can't be in the past");
+
+    packs.modify(pack_itr, same_payer, [&](auto &_pack) {
+        _pack.unlock_time = new_unlock_time;
+    });
+}
+
+
+ACTION atomicpacks::setpackdescr(
+    name authorized_account,
+    uint64_t pack_id,
+    string description
+) {
+    require_auth(authorized_account);
+
+    auto pack_itr = packs.require_find(pack_id, "No pack with this id exists");
+
+    check(pack_itr->template_id != -1, "The pack has not been completed yet");
+
+    packs.modify(pack_itr, same_payer, [&](auto &_pack) {
+        _pack.description = description;
     });
 }
 
