@@ -18,6 +18,10 @@ ACTION atomicpacks::announcepack(
     check_has_collection_auth(get_self(), collection_name);
 
     uint64_t pack_id = packs.available_primary_key();
+    if (pack_id == 0) {
+        pack_id = 1;
+    }
+    
     packs.emplace(authorized_account, [&](auto &_pack) {
         _pack.pack_id = pack_id;
         _pack.collection_name = collection_name;

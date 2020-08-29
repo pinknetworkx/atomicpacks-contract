@@ -81,8 +81,8 @@ ACTION atomicpacks::claimunboxed(
 
     if (unboxassets.begin() == unboxassets.end()) {
         unboxpacks.erase(unboxpack_itr);
-        //Unboxassets table scope 112 + unboxpacks entry 136
-        ram_cost_delta -= 248;
+        //Unboxassets table scope 112 + unboxpacks entry 264
+        ram_cost_delta -= 376;
 
     }
 
@@ -116,6 +116,10 @@ ACTION atomicpacks::receiverand(
 
     auto unboxpack_itr = unboxpacks.find(assoc_id);
     auto pack_itr = packs.find(unboxpack_itr->pack_id);
+
+
+    //job table entry in the rng oracle contract has been erased
+    increase_collection_ram_balance(pack_itr->collection_name, 144);
 
 
     packrolls_t packrolls = get_packrolls(unboxpack_itr->pack_id);
@@ -207,7 +211,7 @@ void atomicpacks::receive_asset_transfer(
     check(size == read, "Signing value generation: read_transaction() has failed.");
     checksum256 tx_id = eosio::sha256(buf, read);
     uint64_t signing_value;
-    memcpy(&signing_value, &tx_id, sizeof(signing_value));
+    memcpy(&signing_value, tx_id.data(), sizeof(signing_value));
 
     //Check if the signing_value was already used.
     //If that is the case, increment the signing_value until a non-used value is found
@@ -217,13 +221,14 @@ void atomicpacks::receive_asset_transfer(
 
     //This amount of RAM will be needed to fill the packrolls table when the randomness is received
     //112 for the unboxassets scope
-    //124 for each unboxassets row
+    //124 for each unboxassets row (112 for pk + 8 + 4)
     packrolls_t packrolls = get_packrolls(pack_itr->pack_id);
     int64_t reserved_ram_bytes = 112 + std::distance(packrolls.begin(), packrolls.end()) * 124;
 
-    //136 for the unboxpacks entry (112 scope + 3 x 8)
-    //120 for the signvals entry in the rng oracle contract
-    decrease_collection_ram_balance(pack_itr->collection_name, reserved_ram_bytes + 136 + 120,
+    //264 for the unboxpacks entry (112 for pk + 3 x 8 for data + 128 for sk)
+    //120 for the signvals entry in the rng oracle contract (112 pk + 8 for data)
+    //144 for the jobs entry in the rng oracle contract (112 pk + 4 x 8 for data)
+    decrease_collection_ram_balance(pack_itr->collection_name, reserved_ram_bytes + 264 + 120 + 144,
         "The collection does not have enough RAM to pay for the reserved bytes");
 
     unboxpacks.emplace(get_self(), [&](auto &_unboxpack) {
