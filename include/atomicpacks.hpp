@@ -12,6 +12,9 @@
 using namespace std;
 using namespace eosio;
 
+static constexpr name   CORE_TOKEN_ACCOUNT = name("eosio.token");
+static constexpr symbol CORE_TOKEN_SYMBOL  = symbol("WAX", 8);
+
 CONTRACT atomicpacks : public contract {
 public:
     using contract::contract;
@@ -85,21 +88,15 @@ public:
 
 
     ACTION withdrawram(
-        name from,
-        int64_t bytes
-    );
-
-    ACTION addcolram(
-        name from_account,
-        name to_collection_name,
-        int64_t bytes
-    );
-
-    ACTION removecolram(
         name authorized_account,
-        name from_collection_name,
-        name to_account,
+        name collection_name,
+        name recipient,
         int64_t bytes
+    );
+
+    ACTION buyramproxy(
+        name collection_to_credit,
+        asset quantity
     );
 
 
@@ -181,28 +178,18 @@ private:
 
 
     TABLE rambalances_s {
-        name    owner;
-        int64_t byte_balance;
-
-        uint64_t primary_key() const { return owner.value; }
-    };
-
-    typedef multi_index<name("rambalances"), rambalances_s> rambalances_t;
-
-    TABLE colbalances_s {
         name    collection_name;
         int64_t byte_balance;
 
         uint64_t primary_key() const { return collection_name.value; }
     };
 
-    typedef multi_index<name("colbalances"), colbalances_s> colbalances_t;
+    typedef multi_index<name("rambalances"), rambalances_s> rambalances_t;
 
 
     packs_t       packs       = packs_t(get_self(), get_self().value);
     unboxpacks_t  unboxpacks  = unboxpacks_t(get_self(), get_self().value);
     rambalances_t rambalances = rambalances_t(get_self(), get_self().value);
-    colbalances_t colbalances = colbalances_t(get_self(), get_self().value);
 
     packrolls_t get_packrolls(uint64_t pack_id);
 
