@@ -10,7 +10,8 @@
 ACTION atomicpacks::announcepack(
     name authorized_account,
     name collection_name,
-    uint32_t unlock_time
+    uint32_t unlock_time,
+    string display_data
 ) {
     require_auth(authorized_account);
     check_has_collection_auth(authorized_account, collection_name);
@@ -28,7 +29,7 @@ ACTION atomicpacks::announcepack(
         _pack.unlock_time = unlock_time;
         _pack.template_id = -1;
         _pack.roll_counter = 0;
-        _pack.description = "";
+        _pack.display_data = display_data;
     });
 
 
@@ -216,10 +217,10 @@ ACTION atomicpacks::setpacktime(
 }
 
 
-ACTION atomicpacks::setpackdescr(
+ACTION atomicpacks::setpackdata(
     name authorized_account,
     uint64_t pack_id,
-    string description
+    string display_data
 ) {
     require_auth(authorized_account);
 
@@ -228,7 +229,7 @@ ACTION atomicpacks::setpackdescr(
     check(pack_itr->template_id != -1, "The pack has not been completed yet");
 
     packs.modify(pack_itr, same_payer, [&](auto &_pack) {
-        _pack.description = description;
+        _pack.display_data = display_data;
     });
 }
 

@@ -28,7 +28,8 @@ public:
     ACTION announcepack(
         name authorized_account,
         name collection_name,
-        uint32_t unlock_time
+        uint32_t unlock_time,
+        string display_data
     );
 
     ACTION addpackroll(
@@ -56,10 +57,10 @@ public:
         uint32_t new_unlock_time
     );
 
-    ACTION setpackdescr(
+    ACTION setpackdata(
         name authorized_account,
         uint64_t pack_id,
-        string description
+        string display_data
     );
 
 
@@ -128,7 +129,7 @@ private:
         uint32_t unlock_time;
         int32_t  template_id  = -1; //-1 if the pack has not been activated yet
         uint64_t roll_counter = 0;
-        string   description;
+        string   display_data;
 
         uint64_t primary_key() const { return pack_id; }
 
