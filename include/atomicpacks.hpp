@@ -48,7 +48,7 @@ public:
     ACTION completepack(
         name authorized_account,
         uint64_t pack_id,
-        int32_t template_id
+        int32_t pack_template_id
     );
 
     ACTION setpacktime(
@@ -127,13 +127,13 @@ private:
         uint64_t pack_id;
         name     collection_name;
         uint32_t unlock_time;
-        int32_t  template_id  = -1; //-1 if the pack has not been activated yet
+        int32_t  pack_template_id  = -1; //-1 if the pack has not been activated yet
         uint64_t roll_counter = 0;
         string   display_data;
 
         uint64_t primary_key() const { return pack_id; }
 
-        uint64_t by_template_id() const { return (uint64_t) template_id; };
+        uint64_t by_template_id() const { return (uint64_t) pack_template_id; };
     };
 
     typedef multi_index<name("packs"), packs_s,

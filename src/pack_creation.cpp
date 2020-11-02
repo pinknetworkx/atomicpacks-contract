@@ -27,7 +27,7 @@ ACTION atomicpacks::announcepack(
         _pack.pack_id = pack_id;
         _pack.collection_name = collection_name;
         _pack.unlock_time = unlock_time;
-        _pack.template_id = -1;
+        _pack.pack_template_id = -1;
         _pack.roll_counter = 0;
         _pack.display_data = display_data;
     });
@@ -67,7 +67,7 @@ ACTION atomicpacks::addpackroll(
 
     check_has_collection_auth(authorized_account, pack_itr->collection_name);
 
-    check(pack_itr->template_id == -1, "The pack has already been completed");
+    check(pack_itr->pack_template_id == -1, "The pack has already been completed");
 
 
     check(outcomes.size() != 0, "A roll must include at least one outcome");
@@ -141,7 +141,7 @@ ACTION atomicpacks::delpackroll(
 
     check_has_collection_auth(authorized_account, pack_itr->collection_name);
 
-    check(pack_itr->template_id == -1, "The pack has already been completed");
+    check(pack_itr->pack_template_id == -1, "The pack has already been completed");
 
 
     packrolls_t packrolls = get_packrolls(pack_id);
@@ -163,7 +163,7 @@ ACTION atomicpacks::delpackroll(
 ACTION atomicpacks::completepack(
     name authorized_account,
     uint64_t pack_id,
-    int32_t template_id
+    int32_t pack_template_id
 ) {
     require_auth(authorized_account);
 
@@ -172,25 +172,25 @@ ACTION atomicpacks::completepack(
     check_has_collection_auth(authorized_account, pack_itr->collection_name);
 
 
-    check(pack_itr->template_id == -1, "The pack has already been completed");
+    check(pack_itr->pack_template_id == -1, "The pack has already been completed");
 
     packrolls_t packrolls = get_packrolls(pack_id);
     check(packrolls.begin() != packrolls.end(), "The pack does not have any rolls");
 
 
-    check(template_id > 0, "The tempalte id must be positive");
+    check(pack_template_id > 0, "The tempalte id must be positive");
     atomicassets::templates_t col_templates = atomicassets::get_templates(pack_itr->collection_name);
-    auto template_itr = col_templates.require_find(template_id,
+    auto template_itr = col_templates.require_find(pack_template_id,
         "No template with this id exists within the collection taht the pack belongs to");
     check(template_itr->burnable, "The template with this id is not burnable.");
 
 
     auto packs_by_template_id = packs.get_index<name("templateid")>();
-    check(packs_by_template_id.find(template_id) == packs_by_template_id.end(),
+    check(packs_by_template_id.find(pack_template_id) == packs_by_template_id.end(),
         "Another pack is already using this template id");
 
     packs.modify(pack_itr, same_payer, [&](auto &_pack) {
-        _pack.template_id = template_id;
+        _pack.pack_template_id = pack_template_id;
     });
 }
 
@@ -206,7 +206,7 @@ ACTION atomicpacks::setpacktime(
 
     check_has_collection_auth(authorized_account, pack_itr->collection_name);
 
-    check(pack_itr->template_id != -1, "The pack has not been completed yet");
+    check(pack_itr->pack_template_id != -1, "The pack has not been completed yet");
 
     check(new_unlock_time > current_time_point().sec_since_epoch(),
         "The new unlock time can't be in the past");
@@ -226,7 +226,7 @@ ACTION atomicpacks::setpackdata(
 
     auto pack_itr = packs.require_find(pack_id, "No pack with this id exists");
 
-    check(pack_itr->template_id != -1, "The pack has not been completed yet");
+    check(pack_itr->pack_template_id != -1, "The pack has not been completed yet");
 
     packs.modify(pack_itr, same_payer, [&](auto &_pack) {
         _pack.display_data = display_data;
