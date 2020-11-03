@@ -228,7 +228,7 @@ ACTION atomicpacks::setpackdata(
 
     check(pack_itr->pack_template_id != -1, "The pack has not been completed yet");
 
-    packs.modify(pack_itr, same_payer, [&](auto &_pack) {
+    packs.modify(pack_itr, authorized_account, [&](auto &_pack) {
         _pack.display_data = display_data;
     });
 }

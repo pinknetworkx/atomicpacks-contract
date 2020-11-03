@@ -25,6 +25,12 @@ public:
     };
 
 
+    ACTION setident(
+        string contract_type,
+        string version
+    );
+    
+
     ACTION announcepack(
         name authorized_account,
         name collection_name,
@@ -188,9 +194,19 @@ private:
     typedef multi_index<name("rambalances"), rambalances_s> rambalances_t;
 
 
+    TABLE identifier_s {
+        string contract_type = "atomicpacks";
+        string version = "1.0.0";
+    };
+    typedef singleton <name("identifier"), identifier_s> identifier_t;
+    // https://github.com/EOSIO/eosio.cdt/issues/280
+    typedef multi_index <name("identifier"), identifier_s> identifier_t_for_abi;
+
+
     packs_t       packs       = packs_t(get_self(), get_self().value);
     unboxpacks_t  unboxpacks  = unboxpacks_t(get_self(), get_self().value);
     rambalances_t rambalances = rambalances_t(get_self(), get_self().value);
+    identifier_t  identifier  = identifier_t(get_self(), get_self().value);
 
     packrolls_t get_packrolls(uint64_t pack_id);
 

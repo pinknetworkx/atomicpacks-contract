@@ -5,6 +5,16 @@
 #include "unboxing.cpp"
 
 
+ACTION atomicpacks::setident(
+    string contract_type,
+    string version
+) {
+    require_auth(get_self());
+
+    identifier.set({.contract_type = contract_type, .version = version}, get_self());
+}
+
+
 /**
 * This function is called when the contract receives an eosio.token transfer
 * Any core token transferred to the contract is automatically converted to RAM and added
