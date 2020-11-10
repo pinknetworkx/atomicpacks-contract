@@ -17,7 +17,8 @@ ACTION atomicpacks::claimunboxed(
     auto unboxpack_itr = unboxpacks.require_find(pack_asset_id,
         "No unboxpack with this pack asset id exists");
 
-    require_auth(unboxpack_itr->unboxer);
+    check(has_auth(unboxpack_itr->unboxer) || has_auth(get_self()),
+        "The transaction needs to be authorized either by the unboxer or by the contract itself");
 
     check(origin_roll_ids.size() != 0, "The original roll ids vector can't be empty");
 
