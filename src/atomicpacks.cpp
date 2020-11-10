@@ -81,6 +81,7 @@ void atomicpacks::receive_token_transfer(
     string memo
 ) {
     const set <name> ignore = set < name > {
+        atomicassets::ATOMICASSETS_ACCOUNT,
         // EOSIO system accounts
         name("eosio.stake"),
         name("eosio.names"),
