@@ -29,6 +29,10 @@ public:
         string contract_type,
         string version
     );
+
+    ACTION retryrand(
+        uint64_t pack_asset_id
+    );
     
 
     ACTION announcepack(

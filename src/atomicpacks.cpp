@@ -5,6 +5,11 @@
 #include "unboxing.cpp"
 
 
+/**
+* Sets the identifier singleton
+*
+* @required_auth The contract itself
+*/
 ACTION atomicpacks::setident(
     string contract_type,
     string version
@@ -12,6 +17,55 @@ ACTION atomicpacks::setident(
     require_auth(get_self());
 
     identifier.set({.contract_type = contract_type, .version = version}, get_self());
+}
+
+
+/**
+* Requests new randomness for a given assoc_id
+* This is supposed to be used in the rare case that the RNG oracle kills a job for a pack unboxing
+* due to issues with the finisher script.
+*
+* @required_auth The contract itself
+*/
+ACTION atomicpacks::retryrand(
+    uint64_t pack_asset_id
+) {
+    require_auth(get_self());
+
+    unboxpacks.require_find(pack_asset_id,
+        "No open unboxpacks entry with the specified pack asset id exists");
+    
+    unboxassets_t unboxassets = get_unboxassets(pack_asset_id);
+    check(unboxassets.begin() == unboxassets.end(),
+        "The specified pack asset id already has results");
+
+    //Get signing value from transaction id
+    //As this is only used as the signing value for the randomness oracle, it does not matter that this
+    //signing value is not truly random
+    size_t size = transaction_size();
+    char buf[size];
+    uint32_t read = read_transaction(buf, size);
+    check(size == read, "Signing value generation: read_transaction() has failed.");
+    checksum256 tx_id = eosio::sha256(buf, read);
+    uint64_t signing_value;
+    memcpy(&signing_value, tx_id.data(), sizeof(signing_value));
+
+    //Check if the signing_value was already used.
+    //If that is the case, increment the signing_value until a non-used value is found
+    while (orng::signvals.find(signing_value) != orng::signvals.end()) {
+        signing_value++;
+    }
+
+    action(
+        permission_level{get_self(), name("active")},
+        orng::ORNG_CONTRACT,
+        name("requestrand"),
+        std::make_tuple(
+            pack_asset_id,
+            signing_value,
+            get_self()
+        )
+    ).send();
 }
 
 
