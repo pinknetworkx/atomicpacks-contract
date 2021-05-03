@@ -226,6 +226,8 @@ ACTION atomicpacks::setpackdata(
 
     auto pack_itr = packs.require_find(pack_id, "No pack with this id exists");
 
+    check_has_collection_auth(authorized_account, pack_itr->collection_name);
+
     check(pack_itr->pack_template_id != -1, "The pack has not been completed yet");
 
     packs.modify(pack_itr, authorized_account, [&](auto &_pack) {
