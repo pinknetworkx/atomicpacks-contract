@@ -183,6 +183,7 @@ ACTION atomicpacks::completepack(
     auto template_itr = col_templates.require_find(pack_template_id,
         "No template with this id exists within the collection taht the pack belongs to");
     check(template_itr->burnable, "The template with this id is not burnable.");
+    check(template_itr->transferable, "The template with this id is not transferable.");
 
 
     auto packs_by_template_id = packs.get_index<name("templateid")>();
