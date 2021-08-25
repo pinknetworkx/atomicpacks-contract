@@ -200,7 +200,7 @@ private:
 
     TABLE identifier_s {
         string contract_type = "atomicpacks";
-        string version = "1.1.3";
+        string version = "1.1.4";
     };
     typedef singleton <name("identifier"), identifier_s> identifier_t;
     // https://github.com/EOSIO/eosio.cdt/issues/280
