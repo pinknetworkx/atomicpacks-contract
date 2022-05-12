@@ -2,6 +2,7 @@
 
 /**
 * Sells RAM bytes from the from the collection's ram balance and transfers the proceeds to recipient
+* 
 * @required_auth authorized_account, who needs to be an authorized account in the specified collection
 */
 ACTION atomicpacks::withdrawram(
@@ -40,6 +41,46 @@ ACTION atomicpacks::withdrawram(
             string("Sold RAM")
         )
     ).send();
+}
+
+
+/**
+* Refunds RAM bytes to a set of collections. This is meant to be used to refund bytes that get freed without being caught automatically,
+* e.g. for when minted NFTs get burned
+*
+* @required_auth The contract itself
+*/
+ACTION atomicpacks::refundram(
+    name refund_type,
+    uint64_t from_block,
+    uint64_t to_block,
+    vector<RAM_REFUND_DATA> ram_refund_data
+) {
+    require_auth(get_self());
+
+    check(to_block > from_block, "to_block needs to be larger than from_block");
+
+    auto ramrefund_itr = ramrefunds.find(refund_type.value);
+
+    if (ramrefund_itr == ramrefunds.end()) {
+        check(from_block == 0, "For a new ramrefund type, the from_block needs to be 0");
+
+        ramrefunds.emplace(get_self(), [&](auto &_ramrefund) {
+            _ramrefund.refund_type = refund_type;
+            _ramrefund.to_block = to_block;
+        });
+
+    } else {
+        check(from_block == ramrefund_itr->to_block + 1, "For an existing ramrefund type, the from block needs to be the current to block + 1");
+
+        ramrefunds.modify(ramrefund_itr, get_self(), [&](auto &_ramrefund) {
+            _ramrefund.to_block = to_block;
+        });
+    }
+
+    for (RAM_REFUND_DATA &ram_refund_element : ram_refund_data) {
+        increase_collection_ram_balance(ram_refund_element.collection_name, ram_refund_element.bytes);
+    }
 }
 
 

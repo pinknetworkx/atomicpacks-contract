@@ -24,6 +24,11 @@ public:
         int32_t  template_id; //-1 is equal to no NFT being minted
     };
 
+    struct RAM_REFUND_DATA {
+        name collection_name;
+        uint64_t bytes;
+    };
+
 
     ACTION setident(
         string contract_type,
@@ -103,6 +108,13 @@ public:
         name collection_name,
         name recipient,
         int64_t bytes
+    );
+
+    ACTION refundram(
+        name refund_type,
+        uint64_t from_block,
+        uint64_t to_block,
+        vector<RAM_REFUND_DATA> ram_refund_data
     );
 
     ACTION buyramproxy(
@@ -198,9 +210,19 @@ private:
     typedef multi_index<name("rambalances"), rambalances_s> rambalances_t;
 
 
+    TABLE ramrefunds_s {
+        name    refund_type;
+        int64_t to_block;
+
+        uint64_t primary_key() const { return refund_type.value; }
+    };
+
+    typedef multi_index<name("ramrefunds"), ramrefunds_s> ramrefunds_t;
+
+
     TABLE identifier_s {
         string contract_type = "atomicpacks";
-        string version = "1.1.4";
+        string version = "1.2.0";
     };
     typedef singleton <name("identifier"), identifier_s> identifier_t;
     // https://github.com/EOSIO/eosio.cdt/issues/280
@@ -210,6 +232,7 @@ private:
     packs_t       packs       = packs_t(get_self(), get_self().value);
     unboxpacks_t  unboxpacks  = unboxpacks_t(get_self(), get_self().value);
     rambalances_t rambalances = rambalances_t(get_self(), get_self().value);
+    ramrefunds_t  ramrefunds  = ramrefunds_t(get_self(), get_self().value);
     identifier_t  identifier  = identifier_t(get_self(), get_self().value);
 
     packrolls_t get_packrolls(uint64_t pack_id);
